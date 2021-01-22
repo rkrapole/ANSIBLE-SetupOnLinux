@@ -1,0 +1,84 @@
+
+## ansible 2.10.3 installation
+
+----->to have root previlleges
+sudo su
+
+----->to force your machine to update itself
+yum update -y
+
+----->install python & pip(pip comes by default with python)
+yum install python3 -y
+python3 --version(to use python alone set "alternatives --set python /usr/bin/python3")
+
+----->create ansible user
+useradd ansadmin (to create user)
+passwd ansadmin (to setup the password)
+user: ansadmin
+password: rapole@1105
+
+----->add above user to sudors file
+visudo (shift g+o, add above user and same previlleges as rootUser and save :wq)
+
+----->enable password based authentication
+vi /etc/ssh/sshd_config (search for /password, change 'PasswordAuthentication' to Yes and save :wq)
+
+----->reload sshd
+systemctl reload sshd.service
+
+-----> in RHEL7 we cannot install Ansible with root user, so switch to ansible user created above
+su - ansadmin
+
+----->install ansible
+pip3 install ansible --user
+ansible --version
+
+-----> need hosts file to execute playbooks, so create /etc/ansible directory & hosts file
+sudo mkdir /etc/ansible
+cd /etc/ansible/
+sudo vi hosts (add client system ip's)
+
+----->create ssh keys to enable passwordless authentication, between ur ansible control system to managed hosts
+ssh-keygen
+	[ansadmin@ip-172-31-81-182 ansible]$ ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/ansadmin/.ssh/id_rsa):
+Created directory '/home/ansadmin/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/ansadmin/.ssh/id_rsa.
+Your public key has been saved in /home/ansadmin/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:i6moYrOkyZAE8XY3roWLXzXXYWmT5hnBKh8Mjgy5W10 ansadmin@ip-172-31-81-182.ec2.internal
+The key's randomart image is:
++---[RSA 3072]----+
+|.    .     ..    |
+| o  o   . E .+   |
+|. o .+o+ + .X    |
+|.. ..++.+ +* =   |
+| .  .oo So..+    |
+|.. ..+ + +.      |
+|o.. o + .        |
+|*+ o o           |
+|*++ o            |
++----[SHA256]-----+
+[ansadmin@ip-172-31-81-182 ansible]$
+
+-----> copy keys into target/local systems (this can be done by copying id_rsa.pub content to authorized_keys )
+ssh-copy-id localhost (first time enter the password)
+
+-----> test connections
+ansible all -m ping
+
+
+
+
+--> Copy public key from Ansible control machine to server 
+cat ~/.ssh/id_rsa.pub | ssh -i ~/.ssh/AWSKeyPair.pem 34.201.215.99 "cat >> ~/.ssh/authorized_keys"
+
+scp ~/.ssh/id_rsa.pub | ssh -i ~/.ssh/AWSKeyPair.pem 34.201.215.99
+
+ssh-copy-id ~/.ssh/id_rsa.pub -i jenkinsuser@34.201.215.99
+
+ssh-copy-id id_rsa.pub -i ~/.ssh/AWSKeyPair.pem jenkinsuser@34.201.215.99 "cat >> ~/.ssh/authorized_keys"
+
